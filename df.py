@@ -11,7 +11,7 @@ load_dotenv()
 def get_tweets():
     SEARCH_QUERY = 'sirkuit mandalika'
     SEARCH_TYPE = 'Top'
-    TOTAL_LIMIT = 1000
+    TOTAL_LIMIT = 10
     AUTH_USER = os.getenv('AUTH_USER')
     AUTH_EMAIL = os.getenv('AUTH_EMAIL')
     AUTH_PASSWORD = os.getenv('AUTH_PASSWORD')
@@ -64,6 +64,7 @@ print(df)
 
 df['text'] = df['text'].str.replace('\n', ' ').str.replace('\r', ' ')
 
+df['date'] = pd.to_datetime(df['date'], errors='coerce').dt.strftime('%d/%m/%Y %H:%M')
+
 now = datetime.datetime.now()
 df.to_csv(f'df_{now.strftime("%Y%m%d_%H%M%S")}.csv', encoding='utf-8', index=False, quoting=csv.QUOTE_MINIMAL, escapechar='\\')
-
