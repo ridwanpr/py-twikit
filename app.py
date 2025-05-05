@@ -43,7 +43,7 @@ async def main():
         if search_results:
             print(f"Found tweets matching '{SEARCH_QUERY}':")
             count = 0
-            max_tweets_to_print = 5
+            max_tweets_to_print = 10
 
             if hasattr(search_results, '__aiter__'):
                 async for tweet in search_results:
