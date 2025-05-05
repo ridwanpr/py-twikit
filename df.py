@@ -8,9 +8,9 @@ import asyncio
 load_dotenv()
 
 def get_tweets():
-    SEARCH_QUERY = 'madrid'
+    SEARCH_QUERY = 'SEARCH_QUERY'
     SEARCH_TYPE = 'Top'
-    SEARCH_LIMIT = 20
+    TOTAL_LIMIT = 100
     AUTH_USER = os.getenv('AUTH_USER')
     AUTH_EMAIL = os.getenv('AUTH_EMAIL')
     AUTH_PASSWORD = os.getenv('AUTH_PASSWORD')
@@ -33,27 +33,33 @@ def get_tweets():
         print(f"Login/session error: {e}")
         return pd.DataFrame()
 
-    try:
-        search_results = asyncio.run(client.search_tweet(SEARCH_QUERY, SEARCH_TYPE))
-        
+    async def fetch_tweets():
         tweets = []
-        for count, tweet in enumerate(search_results):
-            if count >= SEARCH_LIMIT:
-                break
-            tweets.append({
-                "user": tweet.user.screen_name,
-                "name": tweet.user.name,
-                "date": tweet.created_at,
-                "text": tweet.text
-            })
-        
-        return pd.DataFrame(tweets)
-    
-    except Exception as e:
-        print(f"Search error: {e}")
-        return pd.DataFrame()
+        try:
+            result = await client.search_tweet(SEARCH_QUERY, SEARCH_TYPE, count=20)
+            while len(tweets) < TOTAL_LIMIT:
+                for tweet in result:
+                    tweets.append({
+                        "user": tweet.user.screen_name,
+                        "name": tweet.user.name,
+                        "date": tweet.created_at,
+                        "text": tweet.text
+                    })
+                    if len(tweets) >= TOTAL_LIMIT:
+                        break
+                try:
+                    result = await result.next()
+                except Exception:
+                    break
+        except Exception as e:
+            print(f"Search error: {e}")
+        return tweets
+
+    tweets_data = asyncio.run(fetch_tweets())
+    return pd.DataFrame(tweets_data)
 
 df = get_tweets()
 print(df)
+
 df['text'] = df['text'].str.replace('\n', ' ').str.replace('\r', ' ')
-df.to_csv('df.csv', encoding='utf-8', index=False, quoting=csv.QUOTE_ALL)
+df.to_csv('df.csv', encoding='utf-8', index=False, quoting=csv.QUOTE_MINIMAL, escapechar='\\')
